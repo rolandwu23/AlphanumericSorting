@@ -1,8 +1,9 @@
 package com.the_akm.akm.AlphanumericSort;
 
-import android.app.LoaderManager;
+import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
-import android.content.Loader;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -17,34 +18,56 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class SortActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<List<String>> {
+public class SortActivity extends AppCompatActivity {
+
+//    implements LoaderManager.LoaderCallbacks<List<String>>
+//     private static final int loaderID = 1;
+
     View loadingIndicator;
 
-    private static final int loaderID = 1;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         loadingIndicator=findViewById(R.id.loading_indicator);
-        loadingIndicator.setVisibility(View.GONE);
+        loadingIndicator.setVisibility(View.VISIBLE);
 
+        // Use LoaderManager and AsyncTaskLoader instead of AsyncTask because of screen orientation changes.
+        // If activity destroyed and recreated, asyncTask unable to access new activity
+        // and they tend to stay around leading to out of memory.
 
-        LoaderManager loaderManager=getLoaderManager();
-        loaderManager.initLoader(loaderID,null,this);
+//        final LoaderManager loaderManager = getLoaderManager();
+//        loaderManager.initLoader(loaderID,null,this);
 
+        // starting from API 28, Loader was deprecated and enforces developers to use ViewModel and LiveData
+        StringViewModel stringViewModel = ViewModelProviders.of(this).get(StringViewModel.class);
+        stringViewModel.getAllData().observe(this, new Observer<List<String>>() {
+            @Override
+            public void onChanged(@Nullable List<String> strings) {
+                generate2DArray(strings);
+                loadingIndicator.setVisibility(View.GONE);
+            }
+        });
     }
 
-     public void generate2DArray(List<String> positions){
 
-        String[] values = positions.toArray(new String[0]);
+//    method for finding the distinct values and their relative positions in sorted array
+     public void generate2DArray(List<String> stringList){
+
+        String[] values = stringList.toArray(new String[0]);
+
+        // can use just Arrays.sort(). Custom comparator supports more abstract input data type.
         Arrays.sort(values,new AlphanumericSorting());
 
         Integer[] sourceArray = new Integer[values.length];
         for(int x=0 ; x<values.length;x++)
         {
+            // assuming input data type to be 11A. needs to implement further to support more abstract type.
             sourceArray[x] = Integer.valueOf(values[x].substring(0,values[x].length()-1));
         }
+
         Set<Integer> targetSet = new HashSet<>();
         Collections.addAll(targetSet, sourceArray);
 
@@ -86,33 +109,34 @@ public class SortActivity extends AppCompatActivity implements LoaderManager.Loa
             rows.add(row);
         }
 
-        init it = new init(resultArray.length,max,rows,values,this);
-        it.inflateTableLayout();
+        InflateView it = new InflateView(resultArray.length,max,rows,values,this);
+        it.InflateTableLayout();
     }
 
-    @Override
-    public Loader<List<String>> onCreateLoader(int id, Bundle args) {
-       return new readFileLoader(this);
-    }
+//    @Override
+//    public Loader<List<String>> onCreateLoader(int id, Bundle args) {
+//       return new ReadFileLoader(this);
+//    }
+//
+//    @Override
+//    public void onLoadFinished(Loader<List<String>> loader, List<String> positions) {
+//        loadingIndicator.setVisibility(View.GONE);
+//        generate2DArray(positions);
+//    }
+//
+//    @Override
+//    public void onLoaderReset(Loader<List<String>> loader) { }
 
-    @Override
-    public void onLoadFinished(Loader<List<String>> loader, List<String> positions) {
-        loadingIndicator.setVisibility(View.GONE);
-        generate2DArray(positions);
-    }
 
-    @Override
-    public void onLoaderReset(Loader<List<String>> loader) { }
-
-
-    class init {
+    // inflating tableLayout dynamically, thus create a stand-alone class to stand apart from logic
+    class InflateView {
         int resultArraySize;
         int max;
         ArrayList<ArrayList<Integer>>  rows;
         String[] values;
         Context context;
 
-        private init(int resultArraySize,int max, ArrayList<ArrayList<Integer>>  rows,String[] values,Context context){
+        private InflateView(int resultArraySize,int max, ArrayList<ArrayList<Integer>>  rows,String[] values,Context context){
             this.resultArraySize = resultArraySize;
             this.max = max;
             this.rows = rows;
@@ -120,7 +144,7 @@ public class SortActivity extends AppCompatActivity implements LoaderManager.Loa
             this.context = context;
         }
 
-        private void inflateTableLayout(){
+        private void InflateTableLayout(){
             TableLayout tableLayout = (TableLayout) findViewById(R.id.activity_main_tableLayout);
 
             ArrayList<TextView> textViewArrayList = createTVarrayList(resultArraySize,max);

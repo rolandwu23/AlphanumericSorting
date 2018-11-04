@@ -15,11 +15,11 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
-public class readFileLoader extends AsyncTaskLoader<List<String>> {
+public class ReadFileLoader extends AsyncTaskLoader<List<String>> {
     Context context;
 
 
-    public readFileLoader(Context context){
+    public ReadFileLoader(Context context){
         super(context);
         this.context = context;
 
