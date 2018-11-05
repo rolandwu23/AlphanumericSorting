@@ -21,11 +21,9 @@ public class StringViewModel extends AndroidViewModel {
 
     private MutableLiveData<List<String>> positions;
 
-    private Application application;
 
     StringViewModel(@NonNull Application application){
         super(application);
-        this.application = application;
     }
 
     public LiveData<List<String>> getAllData(){
@@ -38,48 +36,48 @@ public class StringViewModel extends AndroidViewModel {
         return positions;
     }
 
-    public class ReadJsonFile extends AsyncTask<Void,Void,List<String>>{
+    private class ReadJsonFile extends AsyncTask<Void, Void, List<String>>{
 
-        @Override
-        protected List<String> doInBackground(Void... voids) {
-            StringBuilder sb = new StringBuilder();
+            @Override
+            protected List<String> doInBackground (Void...voids){
+                StringBuilder sb = new StringBuilder();
 
-            List<String> positions = new ArrayList<>();
+                List<String> positions = new ArrayList<>();
 
-            try {
-                BufferedReader br = new BufferedReader(new InputStreamReader(application.getAssets().open("assign.json")));
-                String temp;
-                while ((temp = br.readLine()) != null)
-                    sb.append(temp);
-                br.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            String myjsonstring = sb.toString();
-            try {
-                JSONObject jsonObjMain = new JSONObject(myjsonstring);
-
-                JSONArray jsonArray = jsonObjMain.getJSONArray("Items");
-
-                for (int i = 0; i < jsonArray.length(); i++)
-                {
-                    JSONObject jsonObj = jsonArray.getJSONObject(i);
-                    String question = jsonObj.getString("Position");
-                    positions.add(question);
+                try {
+                    BufferedReader br = new BufferedReader(new InputStreamReader(getApplication().getAssets().open("assign.json")));
+                    String temp;
+                    while ((temp = br.readLine()) != null)
+                        sb.append(temp);
+                    br.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
 
-            } catch (JSONException e) {
-                e.printStackTrace();
+                String myjsonstring = sb.toString();
+                try {
+                    JSONObject jsonObjMain = new JSONObject(myjsonstring);
+
+                    JSONArray jsonArray = jsonObjMain.getJSONArray("Items");
+
+                    for (int i = 0; i < jsonArray.length(); i++) {
+                        JSONObject jsonObj = jsonArray.getJSONObject(i);
+                        String question = jsonObj.getString("Position");
+                        positions.add(question);
+                    }
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                return positions;
             }
-            return positions;
+
+            @Override
+            protected void onPostExecute (List < String > strings) {
+                super.onPostExecute(strings);
+
+                positions.setValue(strings);
+            }
         }
 
-        @Override
-        protected void onPostExecute(List<String> strings) {
-            super.onPostExecute(strings);
-
-            positions.setValue(strings);
-        }
-    }
 }
